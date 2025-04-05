@@ -8,8 +8,10 @@ blueprint:
       name: Remote
       description: IKEA TRÅDFRI 5-Button Remote.
       selector:
-        entity:
-          domain: event
+        device:
+          integration: deconz
+          manufacturer: IKEA of Sweden
+          model: TRADFRI remote control
 
     sequence_toggle:
       name: Toggle Button Press

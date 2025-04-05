@@ -7,8 +7,10 @@ blueprint:
       name: Remote
       description: IKEA TRÅDFRI 5-Button Remote.
       selector:
-        entity:
-          domain: event
+        device:
+          integration: deconz
+          manufacturer: IKEA of Sweden
+          model: TRADFRI remote control
     target_light:
       name: Light
       description: White spectrum light to control.
