@@ -1,0 +1,172 @@
+blueprint:
+  name: IKEA TRÅDFRI 5-Button Remote Light Controller
+  description: Control a white spectrum light with an IKEA 5-Button E1524/E1810 'puck' remote. Built on Zigbee2MQTT 2.1 actions.
+  domain: automation
+  input:
+    remote:
+      name: Remote
+      description: IKEA TRÅDFRI 5-Button Remote.
+      selector:
+        entity:
+          domain: event
+    target_light:
+      name: Light
+      description: White spectrum light to control.
+      selector:
+        entity:
+          domain: light
+    brightness_step:
+      name: Brightness Steps
+      description: Percent brightness to increase or decrease by.
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 35
+          step: 1
+          unit_of_measurement: "%"
+          mode: slider
+    brightness_starting:
+      name: Starting Brightness
+      description: Initial brightness of the light when switched on. 0 to leave at previous value.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+          unit_of_measurement: "%"
+          mode: slider
+    kelvin_step:
+      name: Color Temperature Steps
+      description: Percent of color tempereature range to increase or decrease by.
+      default: 20
+      selector:
+        number:
+          min: 1
+          max: 35
+          step: 1
+          unit_of_measurement: "%"
+          mode: slider
+
+trigger:
+  - platform: state
+    entity_id: !input remote
+
+variables:
+    light_entity: !input target_light
+    kelvin_cur: "{{ state_attr(light_entity, 'color_temp_kelvin') }}"
+    kelvin_min: "{{ state_attr(light_entity, 'min_color_temp_kelvin') }}"
+    kelvin_max: "{{ state_attr(light_entity, 'max_color_temp_kelvin') }}"
+    kelvin_step: !input kelvin_step
+    kelvin_change: "{{ (kelvin_max - kelvin_min) * kelvin_step / 100 }}"
+    brightness_step: !input brightness_step
+    brightness_starting: !input brightness_starting
+
+
+action:
+  - choose:
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'toggle' and brightness_starting == 0 }}"
+        sequence:
+          - service: light.toggle
+            target:
+              entity_id: !input target_light
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'toggle' and brightness_starting > 0 }}"
+        sequence:
+          - service: light.toggle
+            data:
+              brightness_pct: "{{ brightness_starting }}"
+            target:
+              entity_id: !input target_light
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'brightness_up_click' }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              brightness_step_pct: "{{ brightness_step }}"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'brightness_up_hold' }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              brightness_pct: 100
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'brightness_down_click' }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              brightness_step_pct: "{{ -brightness_step }}"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'brightness_down_hold' }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              brightness_pct: 1
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'arrow_right_click' }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              kelvin: >
+                {% set kelvin_new = kelvin_cur + kelvin_change %}
+                {{ [kelvin_new, kelvin_max] | min }}
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'arrow_right_hold' }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              kelvin: "{{ kelvin_max }}"
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'arrow_left_click' }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              kelvin: >
+                {% set kelvin_new = kelvin_cur - kelvin_change %}
+                {{ [kelvin_new, kelvin_min] | max }}
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'arrow_left_hold' }}"
+        sequence:
+          - service: light.turn_on
+            target:
+              entity_id: !input target_light
+            data:
+              kelvin: "{{ kelvin_min }}"
+
+mode: single

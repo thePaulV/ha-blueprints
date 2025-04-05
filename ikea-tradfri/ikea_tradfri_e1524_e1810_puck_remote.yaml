@@ -1,0 +1,120 @@
+blueprint:
+  name: IKEA TRÅDFRI 5-Button Remote
+  description: IKEA 5-Button E1524/E1810 'puck' remote. Built on Zigbee2MQTT 2.1 actions.
+  domain: automation
+  input:
+
+    remote:
+      name: Remote
+      description: IKEA TRÅDFRI 5-Button Remote.
+      selector:
+        entity:
+          domain: event
+
+    sequence_toggle:
+      name: Toggle Button Press
+      selector:
+        action: {}
+      default: []
+
+    sequence_up_press:
+      name: Up Button Press
+      selector:
+        action: {}
+      default: []
+
+    sequence_up_hold:
+      name: Up Button Hold
+      selector:
+        action: {}
+      default: []
+
+    sequence_down_press:
+      name: Down Button Press
+      selector:
+        action: {}
+      default: []
+
+    sequence_down_hold:
+      name: Down Button Hold
+      selector:
+        action: {}
+      default: []
+
+    sequence_left_press:
+      name: Left Button Press
+      selector:
+        action: {}
+      default: []
+
+    sequence_left_hold:
+      name: Left Button Hold
+      selector:
+        action: {}
+      default: []
+
+    sequence_right_press:
+      name: Right Button Press
+      selector:
+        action: {}
+      default: []
+
+    sequence_right_hold:
+      name: Right Button Hold
+      selector:
+        action: {}
+      default: []
+
+trigger:
+  - platform: state
+    entity_id: !input remote
+
+action:
+  - choose:
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'toggle' }}"
+        sequence: !input sequence_toggle
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'brightness_up_click' }}"
+        sequence: !input sequence_up_press
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'brightness_up_hold' }}"
+        sequence: !input sequence_up_hold
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'brightness_down_click' }}"
+        sequence: !input sequence_down_press
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'brightness_down_hold' }}"
+        sequence: !input sequence_down_hold
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'arrow_right_click' }}"
+        sequence: !input sequence_right_press
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'arrow_right_hold' }}"
+        sequence: !input sequence_right_hold
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'arrow_left_click' }}"
+        sequence: !input sequence_left_press
+
+      - conditions:
+          - condition: template
+            value_template: "{{ trigger.to_state.attributes.event_type == 'arrow_left_hold' }}"
+        sequence: !input sequence_left_hold
+
+mode: single
